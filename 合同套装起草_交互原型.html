@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>合同套装起草 - 可交互原型</title>
+<style>
+  :root{
+    --blue:#276ff5; --blue-hover:#1d5fd0; --blue-bg:#e8f1ff; --blue-border:#b4d0ff;
+    --border:#dee0e3; --border-light:#e8eaed; --line:#eef0f2;
+    --text:#1f2329; --text-2:#646a73; --text-3:#8f959e;
+    --bg:#f0f1f2; --white:#fff; --red:#f53f3f; --sidebar:#262b33;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;}
+  body{background:var(--bg);color:var(--text);font-size:14px;overflow:hidden;}
+  .hidden{display:none !important;}
+  button{cursor:pointer;border:none;background:none;font-size:14px;}
+  input{font-size:14px;}
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-thumb{background:#c9cdd4;border-radius:4px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+
+  /* ============ 顶部导航 ============ */
+  .topnav{height:56px;background:#fff;border-bottom:1px solid var(--border-light);display:flex;align-items:center;padding:0 20px;position:relative;z-index:50;}
+  .logo-grid{display:grid;grid-template-columns:repeat(2,7px);gap:3px;margin-right:10px;}
+  .logo-grid i{width:7px;height:7px;border-radius:2px;background:var(--blue);}
+  .logo-grid i:nth-child(2){background:#7aa5f9;} .logo-grid i:nth-child(3){background:#a8c6fb;}
+  .logo-text{font-size:19px;font-weight:700;font-style:italic;background:linear-gradient(90deg,#276ff5,#0fbff2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-right:36px;letter-spacing:1px;}
+  .nav-menu{font-size:16px;color:var(--text);display:flex;align-items:center;gap:6px;margin-right:40px;cursor:pointer;}
+  .nav-menu .caret{color:var(--text-3);font-size:12px;}
+  .nav-tab{height:56px;line-height:56px;font-size:16px;color:var(--blue);border-bottom:2px solid var(--blue);padding:0 4px;font-weight:500;}
+  .nav-right{margin-left:auto;display:flex;align-items:center;gap:18px;}
+  .nav-ico{color:var(--text-2);font-size:17px;cursor:pointer;position:relative;}
+  .nav-badge{position:absolute;top:-6px;right:-8px;background:var(--red);color:#fff;font-size:10px;line-height:14px;min-width:14px;border-radius:7px;text-align:center;padding:0 3px;}
+  .nav-btn{background:#e8f1ff;color:var(--blue);padding:7px 16px;border-radius:4px;font-size:14px;}
+  .nav-avatar{width:32px;height:32px;border-radius:50%;background:#d65353;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;}
+
+  /* ============ 布局 ============ */
+  .layout{display:flex;height:calc(100vh - 56px);}
+  .sidebar{width:156px;background:var(--sidebar);flex-shrink:0;padding-top:8px;}
+  .side-item{display:flex;align-items:center;gap:10px;color:#cfd3d9;padding:14px 20px;font-size:14px;cursor:pointer;border-left:3px solid transparent;}
+  .side-item.active{color:#fff;background:#1d222a;border-left-color:var(--blue);}
+  .side-item .ico{font-size:16px;}
+  .main{flex:1;overflow:auto;position:relative;}
+
+  /* ============ 列表页 ============ */
+  .page-head{background:#fff;padding:16px 24px 12px;display:flex;align-items:center;gap:16px;}
+  .page-title{font-size:18px;font-weight:600;}
+  .filter-label{color:var(--text-2);font-size:13px;}
+  .filter-chip{background:#f2f3f5;border-radius:4px;padding:6px 10px;font-size:13px;color:var(--text);display:flex;align-items:center;gap:8px;}
+  .filter-chip .x{color:var(--text-3);cursor:pointer;}
+  .head-right{margin-left:auto;display:flex;align-items:center;gap:16px;}
+  .search-box{display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--border);padding:4px 2px;width:220px;color:var(--text-3);}
+  .search-box input{border:none;outline:none;flex:1;font-size:13px;color:var(--text);}
+  .expand-link{color:var(--blue);font-size:13px;cursor:pointer;display:flex;align-items:center;gap:4px;}
+  .btn-row{background:#fff;padding:4px 24px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .btn{height:34px;padding:0 18px;border-radius:4px;font-size:14px;display:inline-flex;align-items:center;gap:6px;justify-content:center;}
+  .btn-primary{background:var(--blue);color:#fff;}
+  .btn-primary:hover{background:var(--blue-hover);}
+  .btn-default{background:#fff;color:var(--text);border:1px solid var(--border);}
+  .btn-default:hover{border-color:var(--blue);color:var(--blue);}
+  .btn .caret{font-size:10px;opacity:.85;}
+  .btn-split{display:flex;align-items:center;}
+  .btn-split .btn-main{height:34px;padding:0 14px;border-radius:4px 0 0 4px;background:var(--blue);color:#fff;display:flex;align-items:center;}
+  .btn-split .btn-sub{height:34px;width:26px;border-radius:0 4px 4px 0;background:var(--blue-hover);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;}
+  .dd-wrap{position:relative;display:inline-block;}
+  .dd-menu{position:absolute;top:38px;left:0;background:#fff;border:1px solid var(--border-light);box-shadow:0 4px 12px rgba(31,35,41,.12);border-radius:4px;min-width:172px;padding:4px 0;z-index:60;}
+  .dd-item{padding:9px 16px;font-size:14px;color:var(--text);cursor:pointer;display:flex;align-items:center;gap:8px;white-space:nowrap;}
+  .dd-item:hover{background:var(--blue-bg);color:var(--blue);}
+  .dd-item .new-tag{background:var(--red);color:#fff;font-size:10px;line-height:16px;padding:0 5px;border-radius:8px;}
+  .dd-sep{height:1px;background:var(--line);margin:4px 0;}
+
+  .tabs-zone{background:#e9ebee;padding:8px 24px 0;}
+  .tab1-row{display:flex;gap:2px;}
+  .tab1{padding:10px 26px;font-size:14px;color:var(--text-2);cursor:pointer;border-radius:4px 4px 0 0;}
+  .tab1.active{background:#fff;color:var(--blue);font-weight:500;}
+  .tab2-zone{background:#fff;padding:0 24px;border-bottom:1px solid var(--line);display:flex;gap:28px;}
+  .tab2{padding:12px 2px;font-size:14px;color:var(--text-2);cursor:pointer;border-bottom:2px solid transparent;}
+  .tab2.active{color:var(--blue);border-bottom-color:var(--blue);}
+  .count-row{background:#fff;padding:10px 24px;font-size:13px;color:var(--text-2);}
+  .table-wrap{background:#fff;margin:0;padding:0 0 24px;overflow:auto;}
+  table{width:100%;border-collapse:collapse;min-width:1500px;}
+  th{background:#f7f8fa;color:var(--text-2);font-weight:500;font-size:13px;text-align:left;padding:12px 12px;white-space:nowrap;}
+  td{padding:14px 12px;font-size:13px;color:var(--text);border-bottom:1px solid var(--line);white-space:nowrap;}
+  td a{color:var(--blue);text-decoration:none;cursor:pointer;}
+  th:first-child,td:first-child{padding-left:24px;width:40px;}
+  .cbx{width:15px;height:15px;border:1px solid var(--border);border-radius:2px;display:inline-block;vertical-align:middle;background:#fff;cursor:pointer;position:relative;}
+  .cbx.on{background:var(--blue);border-color:var(--blue);}
+  .cbx.on::after{content:'✓';color:#fff;font-size:11px;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;}
+
+  /* ============ 弹窗通用 ============ */
+  .mask{position:fixed;inset:0;background:rgba(31,35,41,.45);z-index:100;display:flex;align-items:center;justify-content:center;}
+  .dialog{background:#fff;border-radius:8px;box-shadow:0 8px 30px rgba(31,35,41,.18);width:780px;max-width:92vw;overflow:hidden;animation:pop .18s ease;}
+  @keyframes pop{from{transform:scale(.96);opacity:.5;}to{transform:scale(1);opacity:1;}}
+  .dlg-head{padding:20px 24px 12px;display:flex;align-items:center;}
+  .dlg-title{font-size:18px;font-weight:600;}
+  .dlg-close{margin-left:auto;font-size:16px;color:var(--text-3);cursor:pointer;padding:4px;}
+  .dlg-close:hover{color:var(--text);}
+  .dlg-body{padding:8px 24px 8px;}
+  .dlg-foot{padding:16px 24px 24px;display:flex;justify-content:center;gap:12px;}
+  .dlg-tip{background:#f7f9fc;border-radius:4px;padding:9px 12px;font-size:13px;color:var(--text-2);margin-bottom:18px;}
+
+  /* 表单字段（下划线风格） */
+  .f-row{display:flex;gap:32px;margin-bottom:22px;}
+  .f-col{flex:1;min-width:0;}
+  .f-l{font-size:13px;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:4px;}
+  .req{color:var(--red);}
+  .u-in{width:100%;border:none;border-bottom:1px solid #c9cdd4;height:34px;font-size:14px;color:var(--text);outline:none;background:transparent;}
+  .u-in:focus{border-bottom-color:var(--blue);}
+  .u-pick{display:flex;align-items:center;border-bottom:1px solid #c9cdd4;height:34px;cursor:pointer;color:var(--text);}
+  .u-pick:hover{border-bottom-color:var(--blue);}
+  .u-pick .val{flex:1;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .u-pick .val.ph{color:var(--text-3);}
+  .u-pick .p-ico{color:var(--text-3);margin-left:8px;font-size:15px;}
+  .f-col.err .u-pick{border-bottom-color:var(--red);}
+  .qty-box{display:flex;align-items:center;gap:10px;}
+  .qty-label{font-size:13px;color:var(--text-2);white-space:nowrap;}
+  .stepper{display:flex;align-items:stretch;border:1px solid var(--border);border-radius:4px;overflow:hidden;height:32px;}
+  .stepper button{width:30px;background:#f7f8fa;color:var(--text-2);font-size:15px;display:flex;align-items:center;justify-content:center;}
+  .stepper button:hover:not(:disabled){background:var(--blue-bg);color:var(--blue);}
+  .stepper button:disabled{color:#c9cdd4;cursor:not-allowed;}
+  .stepper .v{width:44px;display:flex;align-items:center;justify-content:center;border-left:1px solid var(--border);border-right:1px solid var(--border);font-size:14px;background:#fff;}
+
+  /* ============ 范本选择页（参考 P3） ============ */
+  .picker{position:fixed;inset:0;background:#fff;z-index:120;display:flex;flex-direction:column;animation:fade .15s ease;}
+  @keyframes fade{from{opacity:.4;}to{opacity:1;}}
+  .pk-head{height:60px;display:flex;align-items:center;padding:0 28px;border-bottom:1px solid var(--line);flex-shrink:0;}
+  .pk-title{font-size:18px;font-weight:600;}
+  .pk-sub{margin-left:12px;font-size:13px;color:var(--text-3);}
+  .pk-close{margin-left:auto;font-size:18px;color:var(--text-3);cursor:pointer;padding:4px;}
+  .pk-body{flex:1;display:flex;min-height:0;}
+  .pk-left{width:400px;border-right:1px solid var(--line);padding:24px 24px 0;flex-shrink:0;overflow:auto;}
+  .org-field{display:flex;align-items:center;border-bottom:1px solid #c9cdd4;height:38px;font-size:15px;margin-bottom:18px;}
+  .org-field .val{flex:1;}
+  .org-field .o-ico{color:var(--text-2);}
+  .tree-item{padding:10px 14px;font-size:14px;color:var(--text);cursor:pointer;border-radius:4px;display:flex;align-items:center;gap:8px;}
+  .tree-item:hover{background:#f2f3f5;}
+  .tree-item.active{background:var(--blue-bg);color:var(--blue);}
+  .tree-item.child{margin-left:26px;}
+  .tree-caret{font-size:10px;color:var(--blue);}
+  .pk-right{flex:1;padding:20px 28px;overflow:auto;background:#fff;}
+  .pk-tools{display:flex;justify-content:flex-end;margin-bottom:6px;}
+  .pk-search{display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--border);width:250px;padding:4px 2px;color:var(--text-3);}
+  .pk-search input{border:none;outline:none;flex:1;font-size:13px;}
+  .pk-count{font-size:13px;color:var(--text-2);margin:8px 0 14px;}
+  .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:18px;}
+  .tpl-card{background:#f0f7ff;border:1px solid #d6e6ff;border-radius:6px;padding:18px 20px;cursor:pointer;position:relative;overflow:hidden;min-height:150px;transition:all .15s;}
+  .tpl-card:hover{border-color:var(--blue-border);box-shadow:0 3px 10px rgba(39,111,245,.12);}
+  .tpl-card.sel{border:1px solid var(--blue);background:#e8f1ff;box-shadow:0 0 0 1px var(--blue) inset;}
+  .tpl-name{font-size:18px;font-weight:600;margin-bottom:12px;}
+  .tpl-meta{font-size:13px;color:var(--text-2);line-height:22px;}
+  .tpl-deco{position:absolute;right:16px;bottom:12px;display:flex;align-items:flex-end;gap:5px;opacity:.75;}
+  .tpl-deco i{display:block;background:#a9cdfb;border-radius:1px;}
+  .tpl-deco i:nth-child(1){width:9px;height:26px;} .tpl-deco i:nth-child(2){width:9px;height:14px;}
+  .tpl-deco i:nth-child(3){width:9px;height:32px;} .tpl-deco i:nth-child(4){width:34px;height:12px;margin-left:2px;}
+  .sel-badge{position:absolute;top:0;right:0;width:0;height:0;border-top:34px solid var(--blue);border-left:34px solid transparent;display:none;}
+  .tpl-card.sel .sel-badge{display:block;}
+  .sel-badge::after{content:"✓";position:absolute;top:-32px;left:6px;color:#fff;font-size:13px;}
+  .pk-foot{border-top:1px solid var(--line);padding:14px;display:flex;justify-content:center;gap:12px;flex-shrink:0;background:#fff;}
+
+  /* ============ 套装起草工作台 ============ */
+  .ws-head{background:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px;}
+  .ws-title{font-size:18px;font-weight:600;}
+  .ws-code{background:#f2f3f5;border-radius:4px;padding:4px 10px;font-size:12px;color:var(--text-2);}
+  .ws-head .btns{margin-left:auto;display:flex;gap:10px;}
+  .ws-banner{background:var(--blue-bg);border-bottom:1px solid #d6e6ff;padding:10px 24px;font-size:13px;color:var(--text);display:flex;gap:28px;flex-wrap:wrap;align-items:center;}
+  .ws-banner b{color:var(--blue);font-weight:600;}
+  .ws-banner .lab{color:var(--text-2);}
+  .doc-tabs{background:#fff;padding:0 24px;display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto;flex-shrink:0;}
+  .doc-tab{padding:12px 18px;font-size:14px;color:var(--text-2);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;display:flex;align-items:center;gap:8px;}
+  .doc-tab:hover{color:var(--blue);}
+  .doc-tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:500;}
+  .doc-tab .role-tag{font-size:11px;line-height:18px;padding:0 6px;border-radius:3px;background:#f2f3f5;color:var(--text-2);}
+  .doc-tab.active .role-tag{background:var(--blue-bg);color:var(--blue);}
+  .doc-tab .dot{width:6px;height:6px;border-radius:50%;background:#ff9a2e;}
+  .ws-body{flex:1;overflow:auto;background:var(--bg);padding:14px 24px 24px;}
+  .ws-col{display:flex;flex-direction:column;height:calc(100vh - 56px);}
+  .pane-meta{background:#fff;border:1px solid var(--line);border-bottom:none;border-radius:4px 4px 0 0;padding:10px 20px;font-size:13px;color:var(--text-2);display:flex;gap:24px;flex-wrap:wrap;}
+  .pane-meta b{color:var(--text);font-weight:500;}
+  .sec{background:#fff;border:1px solid var(--line);padding:6px 24px 20px;margin-top:12px;border-radius:4px;}
+  .sec:first-of-type{margin-top:0;border-radius:0 0 4px 4px;}
+  .sec-title{font-size:15px;font-weight:600;padding:14px 0 6px;display:flex;align-items:center;gap:8px;}
+  .sec-title .tri{font-size:10px;color:var(--text-2);}
+  .form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px 36px;padding-top:8px;}
+  .form-grid .f-l{color:var(--text-2);}
+  .form-grid .u-in{font-size:14px;}
+  .span2{grid-column:span 2;}
+
+  /* 合同附件 */
+  .sec-ops{margin-left:auto;display:flex;gap:20px;}
+  .sec-ops button{font-size:13px;color:var(--text-2);}
+  .sec-ops button:hover{color:var(--blue);}
+  .att-table{width:100%;min-width:0;border-collapse:collapse;border:1px solid var(--line);}
+  .att-table th{background:#f7f8fa;color:var(--text-2);font-weight:500;font-size:13px;text-align:left;padding:10px 12px;white-space:nowrap;}
+  .att-table td{padding:12px;font-size:13px;color:var(--text);border-bottom:1px solid var(--line);white-space:nowrap;}
+  .att-table th:first-child,.att-table td:first-child{padding-left:12px;width:40px;}
+  .att-table tr:last-child td{border-bottom:none;}
+  .att-ico{display:flex;align-items:center;gap:8px;}
+  .clip{display:inline-flex;align-items:center;gap:2px;color:var(--blue);font-size:12px;}
+  .w-ico{width:26px;height:26px;border-radius:4px;background:#4a7cf6;color:#fff;font-weight:700;font-size:14px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .att-link{color:var(--blue);cursor:pointer;}
+  .att-link:hover{text-decoration:underline;}
+  .tgl{width:36px;height:20px;border-radius:10px;background:#c9cdd4;position:relative;cursor:pointer;transition:.15s;display:inline-block;vertical-align:middle;}
+  .tgl::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.15s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+  .tgl.on{background:#9db3f2;}
+  .tgl.on::after{left:18px;}
+  .att-empty{text-align:center;color:var(--text-3);padding:28px 0 !important;font-size:13px;}
+
+  /* WPS 风格预览 */
+  .pv{position:fixed;inset:0;background:#e9ebee;z-index:250;display:flex;flex-direction:column;animation:fade .15s ease;}
+  .pv-bar{height:52px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:0 20px;flex-shrink:0;}
+  .pv-name{font-size:14px;font-weight:500;}
+  .pv-tag{font-size:11px;color:var(--blue);background:var(--blue-bg);padding:2px 8px;border-radius:3px;}
+  .pv-ctrl{margin:0 auto;display:flex;align-items:center;gap:10px;}
+  .pv-ctrl button{width:26px;height:26px;border:1px solid var(--border);border-radius:4px;background:#fff;color:var(--text-2);display:flex;align-items:center;justify-content:center;font-size:14px;}
+  .pv-ctrl button:hover{color:var(--blue);border-color:var(--blue);}
+  #pv-zoom,#pv-pageind{min-width:46px;text-align:center;font-size:13px;color:var(--text-2);}
+  .pv-sep{width:1px;height:18px;background:var(--border);}
+  .pv-acts{display:flex;gap:8px;align-items:center;}
+  .pv-acts button{height:30px;padding:0 14px;border:1px solid var(--border);border-radius:4px;background:#fff;font-size:13px;color:var(--text);}
+  .pv-acts button:hover{color:var(--blue);border-color:var(--blue);}
+  .pv-close{border:none !important;font-size:15px;color:var(--text-3);width:30px;}
+  .pv-body{flex:1;overflow:auto;padding:28px 0 70px;}
+  .pv-zoomwrap{display:flex;flex-direction:column;align-items:center;gap:22px;transform-origin:top center;}
+  .pv-page{width:794px;min-height:1123px;background:#fff;box-shadow:0 2px 12px rgba(31,35,41,.14);padding:90px 96px;flex-shrink:0;}
+  .pv-page h1{font-size:22px;text-align:center;letter-spacing:8px;margin-bottom:10px;}
+  .pv-no{text-align:center;font-size:12px;color:var(--text-3);margin-bottom:30px;}
+  .pv-party{font-size:14px;line-height:30px;}
+  .pv-page p{font-size:14px;line-height:28px;text-indent:2em;margin-top:6px;}
+  .pv-sign{display:flex;gap:140px;margin-top:70px;font-size:14px;line-height:36px;}
+
+  /* 确认小弹窗 & toast */
+  .dialog-sm{width:420px;}
+  .confirm-text{padding:8px 24px 4px;font-size:14px;color:var(--text);line-height:24px;}
+  #toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:rgba(31,35,41,.88);color:#fff;padding:10px 22px;border-radius:4px;font-size:14px;z-index:300;display:none;box-shadow:0 4px 14px rgba(0,0,0,.2);}
+  #toast.ok{background:rgba(23,122,60,.92);}
+</style>
+</head>
+<body>
+
+<!-- ==================== 页面1：通用合同列表 ==================== -->
+<div id="screen-list" style="height:100vh;display:flex;flex-direction:column;">
+  <div class="topnav">
+    <div class="logo-grid"><i></i><i></i><i></i><i></i></div>
+    <div class="logo-text">金蝶AI星瀚</div>
+    <div class="nav-menu">合同起草 <span class="caret">▾</span></div>
+    <div class="nav-tab">通用合同列表</div>
+    <div class="nav-right">
+      <span class="nav-ico">🔍</span>
+      <span class="nav-ico">💬</span>
+      <span class="nav-ico">🤖</span>
+      <span class="nav-ico">🔔<span class="nav-badge">1</span></span>
+      <button class="nav-btn">产品共创</button>
+      <div class="nav-avatar">示</div>
+    </div>
+  </div>
+  <div class="layout">
+    <div class="sidebar">
+      <div class="side-item active"><span class="ico">🖥</span>合同创建</div>
+    </div>
+    <div class="main">
+      <div class="page-head">
+        <div class="page-title">通用合同</div>
+        <span class="filter-label">筛选条件</span>
+        <div class="filter-chip">所属组织：环宇国际集团有限公司 <span class="x">×</span></div>
+        <div class="head-right">
+          <div class="search-box">🔍<input placeholder="搜索合同编号/合同名称"></div>
+          <span class="expand-link">展开 ⌄</span>
+        </div>
+      </div>
+      <div class="btn-row">
+        <div class="dd-wrap">
+          <button class="btn btn-primary" id="btn-create">合同创建 <span class="caret">▾</span></button>
+          <div class="dd-menu hidden" id="create-menu">
+            <div class="dd-item" data-act="blank">空白创建</div>
+            <div class="dd-item" data-act="tpl">使用范本创建</div>
+            <div class="dd-item" data-act="upload">上传合同文件</div>
+            <div class="dd-sep"></div>
+            <div class="dd-item" data-act="set">范本批量起草 <span class="new-tag">新</span></div>
+          </div>
+        </div>
+        <button class="btn btn-primary">删除</button>
+        <div class="btn-split"><button class="btn-main">提交</button><button class="btn-sub">▾</button></div>
+        <div class="btn-split"><button class="btn-main">审核</button><button class="btn-sub">▾</button></div>
+        <button class="btn btn-primary">业务操作</button>
+        <button class="btn btn-primary">业务查询</button>
+        <button class="btn btn-primary">刷新</button>
+        <button class="btn btn-primary">退出</button>
+      </div>
+      <div class="tabs-zone">
+        <div class="tab1-row">
+          <div class="tab1 active">全部合同(4)</div>
+          <div class="tab1">我创建的合同(3)</div>
+          <div class="tab1">可查看的合同(1)</div>
+        </div>
+      </div>
+      <div class="tab2-zone">
+        <div class="tab2 active">全部(4)</div><div class="tab2">拟定(1)</div><div class="tab2">预审(1)</div>
+        <div class="tab2">审批(0)</div><div class="tab2">签署(0)</div><div class="tab2">履约(2)</div>
+        <div class="tab2">归档(0)</div><div class="tab2">关闭(0)</div><div class="tab2">作废(0)</div>
+      </div>
+      <div class="count-row">共4条</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th><span class="cbx"></span></th><th>#</th><th>所属组织</th><th>合同编号</th><th>合同名称</th><th>合同属性</th><th>合同类型</th><th>合同范本</th><th>合同状态</th><th>项目号</th><th>签订日期</th><th>起始日期</th><th>截止日期</th><th>结算币</th><th>签约税额</th><th>签约金额(不含税)</th>
+          </tr></thead>
+          <tbody>
+            <tr><td><span class="cbx"></span></td><td>1</td><td>环宇国际集团有限公司</td><td><a>HT-202610-000009</a></td><td></td><td>合同</td><td>物资采购</td><td></td><td>拟定中</td><td></td><td>2026-10-15</td><td></td><td></td><td>人民币</td><td></td><td></td></tr>
+            <tr><td><span class="cbx"></span></td><td>2</td><td>环宇国际集团有限公司</td><td><a>HT-202610-000007</a></td><td>软件销售合同-k01</td><td>合同</td><td>物资销售</td><td>软件销售合同</td><td>签署履约</td><td>PUB</td><td>2026-10-15</td><td></td><td></td><td>人民币</td><td>￥13,084.11</td><td>￥186,915.89</td></tr>
+            <tr><td><span class="cbx"></span></td><td>3</td><td>环宇国际集团有限公司</td><td><a>HT-202610-000006</a></td><td>测试用</td><td>合同</td><td>物资采购</td><td>软件销售合同</td><td>签署履约</td><td></td><td>2026-10-14</td><td></td><td></td><td>人民币</td><td>￥6,542.06</td><td>￥93,457.94</td></tr>
+            <tr><td><span class="cbx"></span></td><td>4</td><td>环宇国际集团有限公司</td><td><a>HT-202609-000003</a></td><td>销售合同</td><td>合同</td><td>物资销售</td><td></td><td>预审中</td><td></td><td>2026-09-04</td><td>2026-09-01</td><td>2026-09-30</td><td>人民币</td><td>￥6,542.06</td><td>￥93,457.94</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 弹窗：范本批量起草 ==================== -->
+<div class="mask hidden" id="dlg-set">
+  <div class="dialog">
+    <div class="dlg-head">
+      <div class="dlg-title">范本批量起草</div>
+      <span class="dlg-close" onclick="closeSetDialog()">✕</span>
+    </div>
+    <div class="dlg-body">
+      <div class="dlg-tip">为框架协议与子合同分别选择合同范本并填写份数，确认后系统按份数生成套装起草单据，在「范本批量起草」页签中逐份填写。</div>
+      <div class="f-row">
+        <div class="f-col" id="col-fw">
+          <div class="f-l">框架协议范本 <span class="req">*</span></div>
+          <div class="u-pick" onclick="openPicker('fw')">
+            <span class="val ph" id="fw-val">请选择合同范本</span>
+            <span class="p-ico">🔍</span>
+          </div>
+        </div>
+        <div class="f-col" style="flex:0 0 200px;">
+          <div class="f-l">数量</div>
+          <div class="qty-box">
+            <div class="stepper">
+              <button id="fw-minus" onclick="setQty('fw',-1)">−</button>
+              <span class="v" id="fw-qty">1</span>
+              <button id="fw-plus" onclick="setQty('fw',1)">+</button>
+            </div>
+            <span class="qty-label">份</span>
+          </div>
+        </div>
+      </div>
+      <div class="f-row">
+        <div class="f-col" id="col-sub">
+          <div class="f-l">子合同范本 <span class="req">*</span></div>
+          <div class="u-pick" onclick="openPicker('sub')">
+            <span class="val ph" id="sub-val">请选择合同范本</span>
+            <span class="p-ico">🔍</span>
+          </div>
+        </div>
+        <div class="f-col" style="flex:0 0 200px;">
+          <div class="f-l">数量</div>
+          <div class="qty-box">
+            <div class="stepper">
+              <button id="sub-minus" onclick="setQty('sub',-1)">−</button>
+              <span class="v" id="sub-qty">1</span>
+              <button id="sub-plus" onclick="setQty('sub',1)">+</button>
+            </div>
+            <span class="qty-label">份</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dlg-foot">
+      <button class="btn btn-default" onclick="closeSetDialog()">取消</button>
+      <button class="btn btn-primary" onclick="confirmSet()">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 范本选择页（参考 P3） ==================== -->
+<div class="picker hidden" id="picker">
+  <div class="pk-head">
+    <div class="pk-title">选择合同范本</div>
+    <div class="pk-sub" id="pk-for">当前字段：框架协议范本</div>
+    <span class="pk-close" onclick="closePicker(false)">✕</span>
+  </div>
+  <div class="pk-body">
+    <div class="pk-left">
+      <div class="org-field"><span class="val">环宇国际集团有限公司</span><span class="o-ico">🏢</span></div>
+      <div id="tree"></div>
+    </div>
+    <div class="pk-right">
+      <div class="pk-tools">
+        <div class="pk-search">🔍<input id="pk-search" placeholder="搜索范本编码/范本名称" oninput="renderPicker()"></div>
+      </div>
+      <div class="pk-count" id="pk-count">共2条</div>
+      <div class="card-grid" id="pk-cards"></div>
+    </div>
+  </div>
+  <div class="pk-foot">
+    <button class="btn btn-default" onclick="closePicker(false)">取消</button>
+    <button class="btn btn-primary" onclick="closePicker(true)">确定</button>
+  </div>
+</div>
+
+<!-- ==================== 页面2：范本批量起草工作台 ==================== -->
+<div id="screen-ws" class="hidden" style="height:100vh;display:flex;flex-direction:column;">
+  <div class="topnav">
+    <div class="logo-grid"><i></i><i></i><i></i><i></i></div>
+    <div class="logo-text">金蝶AI星瀚</div>
+    <div class="nav-menu">合同起草 <span class="caret">▾</span></div>
+    <div class="nav-tab">范本批量起草</div>
+    <div class="nav-right">
+      <span class="nav-ico">🔍</span><span class="nav-ico">💬</span><span class="nav-ico">🤖</span>
+      <span class="nav-ico">🔔<span class="nav-badge">1</span></span>
+      <button class="nav-btn">产品共创</button>
+      <div class="nav-avatar">示</div>
+    </div>
+  </div>
+  <div class="ws-col">
+    <div class="ws-head">
+      <div class="ws-title">范本批量起草</div>
+      <span class="ws-code" id="ws-code">套装编号：HTTZ-202610-000001</span>
+      <div class="btns">
+        <button class="btn btn-default" onclick="saveSet()">保存</button>
+        <button class="btn btn-primary" onclick="submitSet()">提交</button>
+        <button class="btn btn-default" onclick="exitWs()">退出</button>
+      </div>
+    </div>
+    <div class="ws-banner" id="ws-banner"></div>
+    <div class="doc-tabs" id="doc-tabs"></div>
+    <div class="ws-body" id="ws-body"></div>
+  </div>
+</div>
+
+<!-- ==================== 附件预览（WPS 风格） ==================== -->
+<div class="pv hidden" id="preview">
+  <div class="pv-bar">
+    <span class="w-ico">W</span>
+    <span class="pv-name" id="pv-name">文件.docx</span>
+    <span class="pv-tag">WPS 预览</span>
+    <div class="pv-ctrl">
+      <button title="缩小" onclick="pvZoom(-10)">−</button><span id="pv-zoom">100%</span><button title="放大" onclick="pvZoom(10)">+</button>
+      <span class="pv-sep"></span>
+      <button title="上一页" onclick="pvPage(-1)">‹</button><span id="pv-pageind">1 / 2</span><button title="下一页" onclick="pvPage(1)">›</button>
+    </div>
+    <div class="pv-acts">
+      <button onclick="toast('演示环境：暂不支持下载')">下载</button>
+      <button onclick="toast('演示环境：暂不支持打印')">打印</button>
+      <button class="pv-close" title="关闭预览" onclick="closePreview()">✕</button>
+    </div>
+  </div>
+  <div class="pv-body" id="pv-body"></div>
+</div>
+
+<!-- ==================== 确认弹窗 ==================== -->
+<div class="mask hidden" id="dlg-confirm" style="z-index:200;">
+  <div class="dialog dialog-sm">
+    <div class="dlg-head"><div class="dlg-title" id="cf-title">确认</div><span class="dlg-close" onclick="hideConfirm()">✕</span></div>
+    <div class="confirm-text" id="cf-text"></div>
+    <div class="dlg-foot">
+      <button class="btn btn-default" onclick="hideConfirm()">取消</button>
+      <button class="btn btn-primary" id="cf-ok">确定</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ================= 数据 ================= */
+var TEMPLATES = [
+  {code:'HTFB-202608-0003', name:'框架协议销售合同', type:'物资销售', ver:2},
+  {code:'HTFB-202608-0004', name:'框架协议采购合同', type:'物资采购', ver:1},
+  {code:'HTFB-202608-0001', name:'软件销售合同',     type:'物资销售', ver:1},
+  {code:'HTFB-202608-0002', name:'物资采购合同',     type:'物资采购', ver:1}
+];
+var TYPES = ['全部类型','物资采购','物资销售'];
+var state = {
+  fw:{tpl:null, qty:1},
+  sub:{tpl:null, qty:1},
+  picker:{field:null, type:'全部类型', sel:null},
+  docs:[], activeDoc:0
+};
+
+/* ================= 工具 ================= */
+function $(id){ return document.getElementById(id); }
+function toast(msg, ok){
+  var t = $('toast'); t.textContent = msg; t.className = ok ? 'ok' : '';
+  t.style.display = 'block';
+  clearTimeout(t._h); t._h = setTimeout(function(){ t.style.display='none'; }, 2200);
+}
+function showConfirm(title, text, onOk){
+  $('cf-title').textContent = title; $('cf-text').innerHTML = text;
+  $('dlg-confirm').classList.remove('hidden');
+  $('cf-ok').onclick = function(){ hideConfirm(); onOk(); };
+}
+function hideConfirm(){ $('dlg-confirm').classList.add('hidden'); }
+
+/* ================= 列表页下拉菜单 ================= */
+$('btn-create').addEventListener('click', function(e){
+  e.stopPropagation(); $('create-menu').classList.toggle('hidden');
+});
+document.addEventListener('click', function(){ $('create-menu').classList.add('hidden'); });
+$('create-menu').addEventListener('click', function(e){
+  var item = e.target.closest('.dd-item'); if(!item) return;
+  e.stopPropagation(); $('create-menu').classList.add('hidden');
+  if(item.dataset.act === 'set'){ openSetDialog(); }
+  else { toast('演示原型：本原型聚焦「范本批量起草」流程'); }
+});
+
+/* ================= 套装起草弹窗 ================= */
+function openSetDialog(){
+  $('dlg-set').classList.remove('hidden');
+  $('col-fw').classList.remove('err'); $('col-sub').classList.remove('err');
+}
+function closeSetDialog(){ $('dlg-set').classList.add('hidden'); }
+function setQty(field, d){
+  var v = state[field].qty + d;
+  if(v < 1 || v > 9){ return; }
+  state[field].qty = v; syncQty();
+}
+function syncQty(){
+  ['fw','sub'].forEach(function(f){
+    $(f+'-qty').textContent = state[f].qty;
+    $(f+'-minus').disabled = state[f].qty <= 1;
+    $(f+'-plus').disabled  = state[f].qty >= 9;
+  });
+}
+function confirmSet(){
+  var ok = true;
+  if(!state.fw.tpl){ $('col-fw').classList.add('err'); ok = false; } else $('col-fw').classList.remove('err');
+  if(!state.sub.tpl){ $('col-sub').classList.add('err'); ok = false; } else $('col-sub').classList.remove('err');
+  if(!ok){ toast('请为框架协议与子合同分别选择合同范本'); return; }
+  buildDocs();
+  closeSetDialog();
+  $('screen-list').classList.add('hidden');
+  $('screen-ws').classList.remove('hidden');
+  renderWorkspace();
+  toast('已按范本份数生成套装起草单据', true);
+}
+
+/* ================= 范本选择页 ================= */
+function openPicker(field){
+  state.picker.field = field;
+  state.picker.type = '全部类型';
+  state.picker.sel = state[field].tpl ? state[field].tpl.code : null;
+  $('pk-for').textContent = '当前字段：' + (field === 'fw' ? '框架协议范本' : '子合同范本');
+  $('pk-search').value = '';
+  renderTree(); renderPicker();
+  $('picker').classList.remove('hidden');
+}
+function closePicker(commit){
+  if(commit){
+    if(!state.picker.sel){ toast('请先选择一个合同范本'); return; }
+    var tpl = TEMPLATES.filter(function(t){ return t.code === state.picker.sel; })[0];
+    state[state.picker.field].tpl = tpl;
+    var el = $(state.picker.field + '-val');
+    el.textContent = tpl.name + '（' + tpl.code + '）';
+    el.classList.remove('ph');
+    $( 'col-' + state.picker.field).classList.remove('err');
+  }
+  $('picker').classList.add('hidden');
+}
+function renderTree(){
+  var html = '';
+  TYPES.forEach(function(t, i){
+    if(i === 0){
+      html += '<div class="tree-item ' + (state.picker.type===t?'active':'') + '" onclick="pickType(\''+t+'\')"><span class="tree-caret">▾</span>' + t + '</div>';
+    } else {
+      html += '<div class="tree-item child ' + (state.picker.type===t?'active':'') + '" onclick="pickType(\''+t+'\')">' + t + '</div>';
+    }
+  });
+  $('tree').innerHTML = html;
+}
+function pickType(t){ state.picker.type = t; renderTree(); renderPicker(); }
+function renderPicker(){
+  var kw = $('pk-search').value.trim();
+  var list = TEMPLATES.filter(function(t){
+    var okType = state.picker.type === '全部类型' || t.type === state.picker.type;
+    var okKw = !kw || t.name.indexOf(kw) > -1 || t.code.indexOf(kw) > -1;
+    return okType && okKw;
+  });
+  $('pk-count').textContent = '共' + list.length + '条';
+  var html = list.map(function(t){
+    var sel = state.picker.sel === t.code ? ' sel' : '';
+    return '<div class="tpl-card' + sel + '" onclick="pickTpl(\'' + t.code + '\')">' +
+      '<div class="sel-badge"></div>' +
+      '<div class="tpl-name">' + t.name + '</div>' +
+      '<div class="tpl-meta">编码：' + t.code + '<br>版本：' + t.ver + '<br>合同类型：' + t.type + '</div>' +
+      '<div class="tpl-deco"><i></i><i></i><i></i><i></i></div></div>';
+  }).join('');
+  $('pk-cards').innerHTML = html || '<div style="color:#8f959e;padding:40px 0;font-size:13px;">暂无可用范本</div>';
+}
+function pickTpl(code){ state.picker.sel = code; renderPicker(); }
+
+/* ================= 工作台 ================= */
+function buildDocs(){
+  var docs = [], i;
+  for(i = 1; i <= state.fw.qty; i++){
+    docs.push({role:'框架协议', seq:i, tpl:state.fw.tpl});
+  }
+  for(i = 1; i <= state.sub.qty; i++){
+    docs.push({role:'子合同', seq:i, tpl:state.sub.tpl});
+  }
+  docs.forEach(function(d, idx){
+    d.no = 'HT-202610-' + pad(10 + idx, 6);
+    d.name = d.tpl.name + (d.role === '子合同' && state.sub.qty > 1 ? '-' + pad(d.seq, 2) : '');
+    d.atts = [{type:'签章附件', name:d.name + '.docx', cnt:1, main:true, remark:'', uploader:'星瀚演示', time:'2026-10-15 10:12:54'}];
+  });
+  state.docs = docs; state.activeDoc = 0;
+}
+function pad(n, w){ n = String(n); while(n.length < w) n = '0' + n; return n; }
+
+function renderWorkspace(){
+  var fw = state.fw, sub = state.sub;
+  $('ws-banner').innerHTML =
+    '<span><span class="lab">框架协议：</span><b>《' + fw.tpl.name + '》</b> × ' + fw.qty + ' 份</span>' +
+    '<span><span class="lab">子合同：</span><b>《' + sub.tpl.name + '》</b> × ' + sub.qty + ' 份</span>' +
+    '<span><span class="lab">套装单据合计：</span><b>' + state.docs.length + '</b> 份</span>' +
+    '<span style="color:#8f959e;">提示：各单据独立填写，提交时按套装一并进入审批流</span>';
+  $('doc-tabs').innerHTML = state.docs.map(function(d, i){
+    return '<div class="doc-tab' + (i === state.activeDoc ? ' active' : '') + '" onclick="switchDoc(' + i + ')">' +
+      '<span class="role-tag">' + d.role + '</span>' + d.role + '-' + d.seq + '<span class="dot" title="拟定中"></span></div>';
+  }).join('');
+  $('ws-body').innerHTML = state.docs.map(function(d, i){
+    return '<div class="doc-pane' + (i === state.activeDoc ? '' : ' hidden') + '" id="pane-' + i + '">' + renderPane(d, i) + '</div>';
+  }).join('');
+}
+function switchDoc(i){
+  state.activeDoc = i;
+  renderWorkspace();
+  $('ws-body').scrollTop = 0;
+}
+function fi(label, val, req, span){
+  return '<div class="fitem' + (span ? ' span2' : '') + '"><div class="f-l">' + label + (req ? ' <span class="req">*</span>' : '') + '</div>' +
+    '<input class="u-in" value="' + (val == null ? '' : val) + '"></div>';
+}
+function renderPane(d, i){
+  var meta = '<div class="pane-meta"><span>单据：<b>' + d.role + '-' + d.seq + '</b></span>' +
+    '<span>合同编号：<b>' + d.no + '</b></span>' +
+    '<span>来源范本：<b>' + d.tpl.name + '（' + d.tpl.code + '）</b></span>' +
+    '<span>状态：<b style="color:#ff9a2e;">拟定中</b></span></div>';
+  var info =
+    '<div class="sec"><div class="sec-title"><span class="tri">▾</span>基本信息</div><div class="form-grid">' +
+      fi('合同编号', d.no, 1) + fi('合同名称', d.name, 1) + fi('所属组织', '环宇国际集团有限公司', 1) + fi('结算组织', '环宇国际集团有限公司', 1) +
+      fi('签订日期', '2026-10-15', 1) + fi('起始日期') + fi('截止日期') + fi('结算币', '人民币', 1) +
+      fi('税率', '增值税7%') + fi('签约税额') + fi('签约金额(不含税)') + fi('签约金额') +
+      fi('大写签约金额') + fi('合同税额(含补充)') + fi('合同不含税金额(含补充)') + fi('合同金额(含补充)') +
+      fi('大写合同金额(含补充)') + fi('项目号') + fi('适用组织范围', '签署组织', 1) + fi('备注') +
+    '</div></div>' +
+    '<div class="sec"><div class="sec-title"><span class="tri">▾</span>主体信息</div><div class="form-grid">' +
+      fi('主体数量', '双方', 1) + fi('我方地位', '乙方') + fi('甲方类型', '客户', 1) + fi('甲方', '顺鑫科技股份有限公司', 1) +
+      fi('甲方联系人', '陈涛') + fi('乙方类型', '签署组织', 1) + fi('乙方', '环宇国际集团有限公司（本部）', 1) + fi('乙方联系人', '张三') +
+    '</div></div>' +
+    '<div class="sec"><div class="sec-title"><span class="tri">▾</span>合同附件' +
+      '<span class="sec-ops"><button onclick="addAtt(' + i + ')">增行</button><button onclick="delAtt(' + i + ')">删行</button></span></div>' +
+      '<table class="att-table"><thead><tr><th><span class="cbx"></span></th><th>#</th><th><span class="req">*</span>附件类型</th><th><span class="req">*</span>附件</th><th>附件名称</th><th>主合同</th><th>备注</th><th>上传人</th><th>上传时间</th></tr></thead>' +
+      '<tbody id="att-body-' + i + '">' + attRows(d, i) + '</tbody></table></div>';
+  return meta + info;
+}
+var CLIP = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#276ff5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>';
+function attRows(d, i){
+  if(!d.atts.length){ return '<tr><td class="att-empty" colspan="9">暂无附件，点击右上角「增行」添加</td></tr>'; }
+  return d.atts.map(function(a, idx){
+    return '<tr data-idx="' + idx + '"><td><span class="cbx" onclick="this.classList.toggle(\'on\')"></span></td>' +
+      '<td>' + (idx + 1) + '</td>' +
+      '<td>' + a.type + '</td>' +
+      '<td><span class="att-ico"><span class="clip">' + CLIP + a.cnt + '</span><span class="w-ico" style="cursor:pointer;" title="点击预览" onclick="openPreview(' + i + ',' + idx + ')">W</span></span></td>' +
+      '<td><a class="att-link" title="点击预览" onclick="openPreview(' + i + ',' + idx + ')">' + a.name + '</a></td>' +
+      '<td><span class="tgl' + (a.main ? ' on' : '') + '" title="主合同附件开关" onclick="toggleMain(' + i + ',' + idx + ')"></span></td>' +
+      '<td>' + (a.remark || '') + '</td>' +
+      '<td>' + a.uploader + '</td>' +
+      '<td>' + a.time + '</td></tr>';
+  }).join('');
+}
+
+function refreshAtt(i){ $('att-body-' + i).innerHTML = attRows(state.docs[i], i); }
+function addAtt(i){
+  var d = state.docs[i];
+  d.atts.push({type:'正文附件', name:d.name + '-附件' + (d.atts.length + 1) + '.docx', cnt:1, main:false, remark:'', uploader:'星瀚演示', time:nowStr()});
+  refreshAtt(i); toast('已增行一条附件', true);
+}
+function delAtt(i){
+  var body = $('att-body-' + i); var idxs = [];
+  body.querySelectorAll('tr[data-idx]').forEach(function(tr){
+    if(tr.querySelector('.cbx.on')) idxs.push(+tr.getAttribute('data-idx'));
+  });
+  if(!idxs.length){ toast('请先勾选要删除的附件行'); return; }
+  idxs.sort(function(a, b){ return b - a; }).forEach(function(x){ state.docs[i].atts.splice(x, 1); });
+  refreshAtt(i); toast('已删除 ' + idxs.length + ' 行附件');
+}
+function toggleMain(i, idx){
+  state.docs[i].atts[idx].main = !state.docs[i].atts[idx].main;
+  refreshAtt(i);
+}
+function nowStr(){
+  var d = new Date(); function p(n){ return n < 10 ? '0' + n : n; }
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+}
+
+/* ================= WPS 风格附件预览 ================= */
+var pvState = {zoom:100, page:1};
+function openPreview(i, idx){
+  var a = state.docs[i].atts[idx];
+  pvState.zoom = 100; pvState.page = 1;
+  $('pv-name').textContent = a.name;
+  $('pv-body').innerHTML = '<div class="pv-zoomwrap" id="pv-wrap">' + pvPages(state.docs[i]) + '</div>';
+  $('preview').classList.remove('hidden');
+  updatePv(); $('pv-body').scrollTop = 0;
+}
+function closePreview(){ $('preview').classList.add('hidden'); }
+function pvZoom(dl){ pvState.zoom = Math.min(200, Math.max(50, pvState.zoom + dl)); updatePv(); }
+function pvPage(dl){
+  pvState.page = Math.min(2, Math.max(1, pvState.page + dl));
+  updatePv();
+  var pg = $('pv-page-' + pvState.page);
+  if(pg){ $('pv-body').scrollTop = Math.max(0, pg.offsetTop - 28); }
+}
+function updatePv(){
+  $('pv-zoom').textContent = pvState.zoom + '%';
+  $('pv-pageind').textContent = pvState.page + ' / 2';
+  var w = $('pv-wrap'); if(w){ w.style.transform = 'scale(' + pvState.zoom / 100 + ')'; }
+}
+function pvPages(d){
+  var p1 = '<div class="pv-page" id="pv-page-1"><h1>合同书</h1><div class="pv-no">合同编号：' + d.no + '</div>' +
+    '<div class="pv-party">甲方：顺鑫科技股份有限公司</div><div class="pv-party">乙方：环宇国际集团有限公司</div>' +
+    '<p>根据《中华人民共和国民法典》及有关法律法规，甲乙双方本着平等、自愿、诚实信用的原则，就下列事项协商一致，共同遵守。</p>' +
+    '<p>第一条 合同标的：乙方向甲方提供本合同约定的货物及服务，具体名称、规格、数量以附件清单为准。</p>' +
+    '<p>第二条 合同金额：本合同总价为人民币（大写）贰拾万元整（￥200,000.00），其中不含税金额￥186,915.89，税额￥13,084.11。</p>' +
+    '<p>第三条 交付与验收：乙方应按合同约定时间、地点交付，甲方应于收到货物后 7 个工作日内完成验收。</p>' +
+    '<p>第四条 结算与支付：甲方应于验收合格后 30 日内支付相应款项，结算币种为人民币。</p></div>';
+  var p2 = '<div class="pv-page" id="pv-page-2"><h1>合同书（续）</h1><div class="pv-no">合同编号：' + d.no + '</div>' +
+    '<p>第五条 质量保证：乙方保证所供货物符合国家标准及合同约定，质保期为验收合格之日起 12 个月。</p>' +
+    '<p>第六条 违约责任：任何一方违反本合同约定，应按合同总价的 0.5‰／日向守约方支付违约金。</p>' +
+    '<p>第七条 争议解决：因本合同发生的争议，双方应友好协商解决；协商不成的，任何一方可向合同签订地人民法院提起诉讼。</p>' +
+    '<p>第八条 其他：本合同一式四份，甲乙双方各执两份，自双方签字盖章之日起生效。</p>' +
+    '<div class="pv-sign"><div>甲方（盖章）：____________<br>授权代表：____________<br>日期：2026-10-15</div><div>乙方（盖章）：____________<br>授权代表：____________<br>日期：2026-10-15</div></div></div>';
+  return p1 + p2;
+}
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape' && !$('preview').classList.contains('hidden')) closePreview();
+});
+
+function saveSet(){ toast('套装草稿已保存', true); }
+function submitSet(){
+  showConfirm('提交套装审批', '提交后，框架协议与 ' + (state.docs.length - state.fw.qty) + ' 份子合同将作为同一套装进入审批流，审批意见按单据分别记录。是否提交？', function(){
+    toast('套装已提交审批', true);
+    backToList();
+  });
+}
+function exitWs(){
+  showConfirm('退出起草', '退出后当前套装的未保存内容将被清空，是否确认退出？', function(){
+    backToList(); toast('已退出范本批量起草');
+  });
+}
+function backToList(){
+  $('screen-ws').classList.add('hidden');
+  $('screen-list').classList.remove('hidden');
+  state.fw = {tpl:null, qty:1}; state.sub = {tpl:null, qty:1}; state.docs = [];
+  ['fw','sub'].forEach(function(f){
+    var el = $(f + '-val'); el.textContent = '请选择合同范本'; el.classList.add('ph');
+  });
+  syncQty();
+}
+syncQty();
+</script>
+</body>
+</html>
